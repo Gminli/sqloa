@@ -1,0 +1,25 @@
+#setbenchmarkdate
+SET @as_of := DATE('2021-10-03');
+
+WITH recent_video AS (
+  SELECT v.video_id, v.duration
+  FROM video_info v
+  WHERE v.release_time >= DATE_SUB(@as_of, INTERVAL 29 DAY)
+    AND v.release_time <  DATE_ADD(@as_of, INTERVAL 1 DAY)
+)
+
+SSELECT
+  l.video_id,
+  ROUND(
+      100 * SUM( CASE WHEN datediff('second', l.start_time, l.end_time) >= rv.duration THEN 1 ELSE 0 END )
+    +  5 * SUM( IFNULL(l.if_like,    0) )
+    +  3 * COUNT(DISTINCT l.comment_id)  
+    +  2 * SUM( IFNULL(l.if_retweet, 0) )
+  , 0) AS hot_index
+
+FROM user_video_log l
+JOIN recent_video rv
+  ON rv.video_id = l.video_id
+GROUP BY l.video_id
+ORDER BY hot_index DESC
+LIMIT 3;
