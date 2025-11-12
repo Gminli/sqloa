@@ -1,0 +1,14 @@
+select
+dt,
+round((sum(view_time)/count(distinct(uid),1) as avg_viiew_len_sec
+from
+(  select
+  date(in_time) as dt,
+  uid,
+  sum(timestampdiff(second,in_time, out_time))as view_time,
+  from tb_user_log
+  where article_id!= 0 and article_id!= '0'
+  group by 1, 2)t
+where dt like '2021-11%'
+group by 1
+order by 2
